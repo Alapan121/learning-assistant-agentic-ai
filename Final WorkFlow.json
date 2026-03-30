@@ -1,0 +1,618 @@
+{
+  "name": "Learning Support Assistant cpy",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -224,
+        112
+      ],
+      "id": "189821de-e40c-4301-a3b3-9b27c98ee9db",
+      "name": "When chat message received",
+      "webhookId": "c61ee773-0f9c-4add-ba7f-acf14ee8d70a"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are a versatile Intelligence Layer and Specialized Data Extractor with memory access. Your goal is to process user input and determine the correct output format based on intent.\n\nCRITICAL: Always review Chat History to maintain context and determine if the current message is a follow-up to a previous academic or general discussion.\n\nDECISION LOGIC:\n\n1. IF the user asks an academic, study-related, or PDF/document-based question:\n   Return ONLY a valid JSON object. Do NOT include any conversational text, markdown formatting (like ```json), or newlines.\n   \n   The JSON must follow this exact structure:\n   {\n     \"subject\": \"The broad field of study (e.g., Mathematics, Science)\",\n     \"topic\": \"The specific chapter or area (e.g., Algebra, Matter)\",\n     \"concept\": \"The specific idea being discussed\",\n     \"difficulty\": \"Assessment of the complexity (Easy/Medium/Hard)\",\n     \"question\": \"The refined version of the user's inquiry\"\n   }\n\n2. IF the user asks a general question, greets you, tells a joke, or asks about non-academic topics (e.g., \"How are you?\", \"Who is Tom Cruise?\"):\n   Return a direct, conversational response as a plain string.\n   - DO NOT use JSON for general conversation.\n   - Be concise, professional, and helpful.\n\nSTRICT RULES:\n- Never mix JSON and plain text in a single response.\n- For academic queries, do NOT provide the answer yourself. Your only job is to extract the parameters for the next agent.\n- Ensure the JSON is \"clean\" so the next node can parse it immediately."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        32,
+        -64
+      ],
+      "id": "7717e8c0-8eb5-4672-ad95-7c7744b19459",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Concept: {{ $json.concept }}\nSubject: {{ $json.subject }}\nTopic: {{ $json.topic }}\nDifficulty: {{ $json.difficulty }}\nQuestion: {{ $json.question }}",
+        "options": {
+          "systemMessage": "=You are an expert academic tutor with access to persistent memory.\n\nCRITICAL: Always check the provided Chat History to see what you explained previously. If the user asks for more details or refers to a past topic, use that memory to give a better answer.\n\nYou will ALWAYS receive:\n- subject\n- topic\n- concept\n- difficulty\n- question\n\nYour job:\nExplain the concept clearly based on the data and your memory of this session.\n\nRules:\n- DO NOT ask questions\n- DO NOT request more info\n- DO NOT refuse\n- DO NOT use placeholders\n- ALWAYS generate explanation using given data and context from memory\n- Be direct and concise."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1024,
+        80
+      ],
+      "id": "67325ce5-be94-48c7-8dc2-9e36c76af474",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1u10cfMAnpyiMmnBJ0dIAlrSJYKuAbihV",
+          "mode": "list",
+          "cachedResultName": "n8n",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1u10cfMAnpyiMmnBJ0dIAlrSJYKuAbihV"
+        },
+        "event": "fileCreated",
+        "options": {
+          "fileType": "all"
+        }
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        512
+      ],
+      "id": "8bb99643-afbc-4c6c-85f8-a83551b29418",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dWszqkyK79C9UAaA",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        96,
+        656
+      ],
+      "id": "e7027d68-8583-477f-8a2d-6f7121209be6",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1_L6f8BFytR5DRoL8FvvIF6TFpAtCD3ym",
+          "mode": "list",
+          "cachedResultName": "big-o-cheatsheet.pdf",
+          "cachedResultUrl": "https://drive.google.com/file/d/1_L6f8BFytR5DRoL8FvvIF6TFpAtCD3ym/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -16,
+        512
+      ],
+      "id": "2d761fd4-ac73-4464-9aea-40cbef8cd034",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dWszqkyK79C9UAaA",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chunkSize": 300,
+        "chunkOverlap": 30,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        688
+      ],
+      "id": "97ef0f3b-02fe-4584-96c2-0f2e68101d55",
+      "name": "Recursive Character Text Splitter1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "deepseek/deepseek-chat",
+          "mode": "list",
+          "cachedResultName": "deepseek/deepseek-chat"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        368
+      ],
+      "id": "3f8841b5-72a2-42dc-9bc1-22c137575534",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "k5tKiFGziafFCg0m",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "chat_history",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "user_input",
+              "fieldValue": "={{ $('When chat message received').item.json.chatInput.trim() }}"
+            },
+            {
+              "fieldId": "ai_response",
+              "fieldValue": "={{ $('AI Agent1').item.json.output }}\n"
+            },
+            {
+              "fieldId": "subject",
+              "fieldValue": "={{ $json.subject }}\n"
+            },
+            {
+              "fieldId": "topic",
+              "fieldValue": "={{ $json.topic }}"
+            },
+            {
+              "fieldId": "concept",
+              "fieldValue": "={{ $json.concept }}"
+            },
+            {
+              "fieldId": "difficulty",
+              "fieldValue": "={{ $json.difficulty }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1568,
+        112
+      ],
+      "id": "7939ec56-f4c1-4d23-8194-82d6ca704874",
+      "name": "Create a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "8kyKRoJYFQ7YgBOH",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawOutput = $json.output || \"\";\n\n// ১. চেক করা হচ্ছে আউটপুটটি কি JSON নাকি সাধারণ টেক্সট (যেমন: Ben Arfa সম্পর্কে উত্তর)\nif (!rawOutput.trim().startsWith('{')) {\n    // এটি সাধারণ টেক্সট হলে সরাসরি রিটার্ন করবে\n    return [{\n        json: {\n            isGeneral: true,\n            response: rawOutput,\n            // পরবর্তী নোডগুলোর এরর এড়াতে খালি ফিল্ড রাখা হয়েছে\n            subject: \"General\",\n            topic: \"Conversation\",\n            concept: \"General Knowledge\",\n            difficulty: \"N/A\",\n            question: rawOutput.substring(0, 50) + \"...\"\n        }\n    }];\n}\n\n// ২. যদি আউটপুটটি JSON হয়, তবে সেটিকে পার্স (Parse) করার চেষ্টা করবে\ntry {\n    const cleanedOutput = rawOutput\n        .replace(/```json/g, \"\")\n        .replace(/```/g, \"\")\n        .trim();\n        \n    const parsedData = JSON.parse(cleanedOutput);\n\n    return [{\n        json: {\n            isGeneral: false,\n            subject: parsedData.subject || \"Unknown\",\n            topic: parsedData.topic || \"Unknown\",\n            concept: parsedData.concept || \"Unknown\",\n            difficulty: parsedData.difficulty || \"Basic\",\n            question: parsedData.question || \"No question provided\"\n        }\n    }];\n} catch (error) {\n    // যদি JSON ফরমেটে কোনো ভুল থাকে, তবে সেটিকেও টেক্সট হিসেবে পাঠাবে\n    return [{\n        json: {\n            isGeneral: true,\n            response: rawOutput,\n            error: \"JSON Parsing failed, treating as plain text\"\n        }\n    }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        -64
+      ],
+      "id": "c5a0fa6d-ddc9-4ba9-bed2-65301ccbc920",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f3e3129e-8868-49a9-90a6-daf08a410586",
+              "name": "subject",
+              "value": "={{ $json.subject }}\n\n",
+              "type": "string"
+            },
+            {
+              "id": "c4c4c8eb-ee11-4a6f-abc4-21cbbd87994e",
+              "name": "topic",
+              "value": "=topic → {{ $json.topic }}",
+              "type": "string"
+            },
+            {
+              "id": "5867dc31-be18-4b94-976a-48a256b02f2a",
+              "name": "concept",
+              "value": "= {{ $json.concept }}",
+              "type": "string"
+            },
+            {
+              "id": "45da93cf-4bd4-4a5c-a93f-0d5ddb363c6d",
+              "name": "difficulty",
+              "value": "= {{ $json.difficulty }}",
+              "type": "string"
+            },
+            {
+              "id": "934af3b5-af9d-4184-8db8-04eedffb654c",
+              "name": "question",
+              "value": "={{ $json.question }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        592,
+        -64
+      ],
+      "id": "aa43ebfc-9959-4eb7-9b19-4b808dc76c11",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst metadata = $json; \nconst aiResponse = $json.output || \"\";\n\nconst cleanString = (val) => {\n    if (typeof val !== 'string') return val;\n    return val.replace(/[\\r\\n\\t]+/gm, \" \").replace(/\\s\\s+/g, ' ').trim();\n};\n\nreturn [{\n    json: {\n        \n        user_input: cleanString($node[\"When chat message received\"]?.json?.chatInput || \"\"),\n        ai_response: aiResponse.trim(),\n        subject: cleanString(metadata.subject || \"N/A\"),\n        topic: cleanString(metadata.topic || \"N/A\"),\n        concept: cleanString(metadata.concept || \"N/A\"),\n        difficulty: cleanString(metadata.difficulty || \"N/A\")\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        128
+      ],
+      "id": "6d255696-6d91-4af3-b72d-8a17c2b0b49d",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// This cleans the final output for the user's chat window\nconst rawResponse = $node[\"AI Agent1\"].json.output || \"\";\nconst userInput = $node[\"When chat message received\"].json.chatInput;\n\n// Function to remove all trailing newlines and system prefixes for the display\nconst cleanDisplay = (text) => {\n    if (typeof text !== 'string') return text;\n    // Removes trailing newlines and internal prefixing like \"topic →\"\n    return text.replace(/topic\\s*→\\s*/gi, '')\n               .replace(/subject\\s*→\\s*/gi, '')\n               .replace(/[\\r\\n]+$/, '') \n               .trim();\n};\n\nreturn [{\n    json: {\n        output: cleanDisplay(rawResponse),\n        original_query: cleanDisplay(userInput)\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        128
+      ],
+      "id": "27b741cf-ed30-4333-a700-5b53754862eb",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// FINAL MASTER FORMATTER: The \"Human-Readable\" UI Layer\nconst rawResponse = $node[\"AI Agent1\"].json.output || \"\";\n\nconst makeMathBeautiful = (text) => {\n    if (typeof text !== 'string') return text;\n\n    return text\n        // 1. Remove n8n Metadata Labels\n        .replace(/(subject|topic|concept|difficulty)\\s*→\\s*/gi, '')\n\n        // 2. Fix Fractions: \\frac{a}{b} -> (a / b)\n        .replace(/\\\\frac\\{([^}]*)\\}\\{([^}]*)\\}/g, '($1 / $2)')\n\n        // 3. Fix Bold Vectors: \\mathbf{w} -> w\n        .replace(/\\\\mathbf\\{([^}]*)\\}/g, '$1')\n\n        // 4. Fix Partial Derivatives: \\partial -> ∂\n        .replace(/\\\\partial/g, '∂')\n\n        // 5. Fix Summations and Sigmas: \\sum -> Σ, \\sigma -> σ\n        .replace(/\\\\sum/g, 'Σ').replace(/\\\\sigma/g, 'σ')\n\n        // 6. Fix Superscripts & Subscripts (e.g., x^(i), e^-z, b_0)\n        .replace(/\\^\\{?([-+0-9a-z]*)\\}?/g, '^$1') \n        .replace(/_\\{?([0-9a-z]*)\\}?/g, '_$1')\n\n        // 7. Clean up Greek Letters\n        .replace(/\\\\alpha/g, 'α').replace(/\\\\log/g, 'log')\n\n        // 8. Strip LaTeX structural brackets \\[ \\] \\( \\)\n        .replace(/\\\\\\[|\\\\\\]|\\\\\\(|\\\\\\)/g, '')\n        .replace(/\\\\left\\[|\\\\right\\]|\\\\left\\(|\\\\right\\)/g, '')\n        \n        // 9. Remove lingering curly braces\n        .replace(/[\\{\\}]/g, '')\n\n        // 10. Final Newline Cleanup\n        .replace(/[\\r\\n]+$/, '') \n        .trim();\n};\n\nreturn [{\n    json: {\n        output: makeMathBeautiful(rawResponse)\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        112
+      ],
+      "id": "1216fb67-5a88-4c82-88d2-73ad3ec768eb",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $root.node[\"When chat message received\"].json.sessionId }}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        1056,
+        400
+      ],
+      "id": "d35b5e93-1bab-4de4-aec2-974411e88336",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "C06R27IuHG5IO1dq",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "embed-multilingual-v3.0"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsCohere",
+      "typeVersion": 1,
+      "position": [
+        528,
+        608
+      ],
+      "id": "7701d59d-b9aa-44f3-81ea-44752d86c0fc",
+      "name": "Embeddings Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "noahJA3UlwJeT4y2",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        384
+      ],
+      "id": "b7f9dec5-158c-4ef1-adcb-300b6279f6a6",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "8kyKRoJYFQ7YgBOH",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Use this tool to find specific information from the uploaded PDF documents and study materials about various topics.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        720,
+        544
+      ],
+      "id": "75f1f1e4-9df2-4aad-bef2-4f2589937c8f",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "8kyKRoJYFQ7YgBOH",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Create a row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Cohere": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        []
+      ]
+    },
+    "Supabase Vector Store1": {
+      "ai_tool": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c5adc8e6-c50a-45ec-b6cf-6edcf9bfa613",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "16e5373ea512c6406c352551e1b0d08301b5fda06c3a67c0a15248b5b2642033"
+  },
+  "id": "4FrjjAPC3V458SEI",
+  "tags": []
+}
